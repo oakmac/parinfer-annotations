@@ -1,0 +1,20 @@
+{
+  "author": "Chris Oakman <chris@oakmac.com> (http://chrisoakman.com/)",
+  "name": "parinfer-annotations",
+  "description": "Helper library for Parinfer test case annotation syntax.",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/oakmac/parinfer-annotations.git"
+  },
+  "main": "parinfer-annotations.js",
+  "devDependencies": {
+    "assert": "1.4.1",
+    "mocha": "4.0.1",
+    "standard": "10.0.3"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/standard && mocha"
+  },
+  "license": "ISC"
+}
