@@ -1,4 +1,4 @@
-# Parinfer Annotations [![Build Status](https://travis-ci.org/oakmac/parinfer-annotations.svg?branch=master)](https://travis-ci.org/oakmac/parinfer-annotations)
+# Parinfer Annotations [![Build Status](https://travis-ci.org/oakmac/parinfer-annotations.svg?branch=master)](https://travis-ci.org/oakmac/parinfer-annotations) <a href="https://standardjs.com"><img src="https://img.shields.io/badge/code_style-standard-brightgreen.svg" alt="Standard - JavaScript Style Guide"></a>
 
 [Parinfer] test cases are written using a custom annotation syntax. This is a
 small helper library to parse that syntax.
