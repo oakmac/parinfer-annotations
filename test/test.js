@@ -11,7 +11,6 @@ const parinferAnnotations = require('../parinfer-annotations.js')
 // - diff lines must be directly below a code line
 // - diff line starts with '-', which cannot come after '+' which previous diff line ends with
 // - diff line can only extend one character past the previous line length (to annotate the 'newline' char)
-// - cursor cannot be over a diff annotation
 // - tabStop does not point to open paren
 // - tabStop is dependent on a proceeding '^'
 // - tabStop cannot come after another '>'
@@ -37,7 +36,17 @@ const multipleCursors =
   '|[a b]\n' +
   '|)'
 
-// TODO: cursor over diff line
+const cursorNotOverDiff =
+  '(|defn foo\n' +
+  '   ---+++\n' +
+  '  [a b]\n' +
+  '  )'
+
+const cursorOverDiff =
+  '(defn |foo\n' +
+  '   ---+++\n' +
+  '  [a b]\n' +
+  '  )'
 
 function testCursors () {
   it('no cursors is fine', function () {
@@ -56,7 +65,16 @@ function testCursors () {
     assert.strictEqual(result.error.code, 1000)
   })
 
-  // TODO: cursor over diff line
+  it('cursor can be on a diff line, but not over it', function () {
+    var result = parinferAnnotations.textToData(cursorNotOverDiff)
+    assert.strictEqual(result.validText, true)
+  })
+
+  it('cursor cannot be over a diff line', function () {
+    var result = parinferAnnotations.textToData(cursorOverDiff)
+    assert.strictEqual(result.validText, false)
+    assert.strictEqual(result.error.code, 1010)
+  })
 }
 
 // -----------------------------------------------------------------------------
