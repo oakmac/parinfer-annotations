@@ -1,4 +1,8 @@
 
+// -----------------------------------------------------------------------------
+// Constants
+// -----------------------------------------------------------------------------
+
 var LINE_ENDING_REGEX = /\r?\n/
 
 // -----------------------------------------------------------------------------
@@ -11,6 +15,14 @@ function isOpenParen (c) {
 
 function isCloseParen (c) {
   return c === '}' || c === ')' || c === ']'
+}
+
+function isString (s) {
+  return typeof s === 'string'
+}
+
+function isArray (a) {
+  return Array.isArray(a)
 }
 
 // -----------------------------------------------------------------------------
@@ -38,8 +50,25 @@ function repeatString (text, n) {
 // Parsing
 // -----------------------------------------------------------------------------
 
-function error (lineNo, msg) {
-  return 'test parse error at line ' + lineNo + ': ' + msg
+function error (code, msg, lineNo) {
+  var err = {
+    code: code,
+    msg: msg
+  }
+
+  if (isString(lineNo)) {
+    err.lineNo = lineNo
+  }
+
+  return err
+}
+
+// there must be exactly zero or one cursor (ie: '|')
+function validateCursor (text) {
+  var pipes = text.match(/\|/g)
+  if (isArray(pipes) && pipes.length > 1) {
+    throw error(1000, 'only one cursor allowed')
+  }
 }
 
 function parsePrevCursorLine (options, inputLineNo, outputLineNo, input) {
@@ -59,13 +88,7 @@ function parsePrevCursorLine (options, inputLineNo, outputLineNo, input) {
 function parseCursorFromLine (options, inputLineNo, outputLineNo, input) {
   var cursorX = input.indexOf('|')
   if (cursorX !== -1) {
-    if (options.cursorX) {
-      throw error(inputLineNo, 'only one cursor allowed.  cursor already found at line', options.cursorLine)
-    }
     var clean = input.split('|').join('')
-    if (clean.length < input.length - 1) {
-      throw error(inputLineNo, 'only one cursor allowed')
-    }
     input = clean
     options.cursorX = cursorX
     options.cursorLine = outputLineNo
@@ -108,7 +131,7 @@ function parseDiffLine (options, inputLineNo, input, diff) {
     (diff.prevCodeLineNo === diff.codeLineNo ||
      diff.prevCodeLineNo + 1 === diff.codeLineNo)
   )
-  var currDiffOpen = x === 0
+  var currDiffOpen = (x === 0)
 
   var change
   if (prevDiffOpen && currDiffOpen) {
@@ -143,7 +166,7 @@ function parseDiffLine (options, inputLineNo, input, diff) {
 
   if (options.cursorLine === diff.codeLineNo) {
     if (x <= options.cursorX && options.cursorX < x + len) {
-      throw error(inputLineNo, 'cursor cannot be over a diff annotation')
+      throw error(1010, 'cursor cannot be over a diff annotation', inputLineNo)
     } else if (options.cursorX < x) {
       x--; oldX--; newX--
     } else {
@@ -191,6 +214,8 @@ function parseInput (text, extras) {
   if (extras.partialResult) { options.partialResult = true }
   if (extras.printParensOnly) { options.returnParens = true }
 
+  validateCursor(text)
+
   var inputLines = text.split(LINE_ENDING_REGEX)
   var outputLines = []
 
@@ -219,13 +244,14 @@ function parseInput (text, extras) {
 
   return {
     text: outputLines.join('\n'),
-    options: options
+    options: options,
+    validText: true
   }
 }
 
-// ------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Output Parser
-// ------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 function parseErrorLine (result, inputLineNo, outputLineNo, input) {
   var match = input.match(/^\s*\^\s*error: ([a-z-]+)\s*$/)
@@ -346,9 +372,9 @@ function parseOutput (text) {
   return result
 }
 
-// ------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Output Printer
-// ------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 function printErrorLine (result) {
   // shift x position back if previous line has cursor before our error caret
@@ -361,7 +387,8 @@ function printErrorLine (result) {
 }
 
 function printTabStopLine (tabStops) {
-  var i, x
+  var i
+  var x
   var lastX = -1
   var line = ''
   var count = 0
@@ -465,7 +492,18 @@ function printOutput (result, extras) {
 // -----------------------------------------------------------------------------
 
 function textToData (text) {
-  return parseInput(text)
+  var result
+
+  try {
+    result = parseInput(text)
+  } catch (err) {
+    result = {
+      error: err,
+      validText: false
+    }
+  }
+
+  return result
 }
 
 function dataToText (data) {
