@@ -5,7 +5,6 @@ const parinferAnnotations = require('../parinfer-annotations.js')
 
 // TODO
 // We need test cases for all of these conditions:
-// - only one error line
 // - only one tabStop line
 // - diff chars must be adjacent with '-'s before '+'s
 // - diff lines must be directly below a code line
@@ -21,7 +20,7 @@ const parinferAnnotations = require('../parinfer-annotations.js')
 // Cursors
 // -----------------------------------------------------------------------------
 
-const zeroCursors =
+const noAnnotations =
   '(defn foo\n' +
   '  [a b]\n' +
   '  )'
@@ -50,7 +49,7 @@ const cursorOverDiff =
 
 function testCursors () {
   it('no cursors is fine', function () {
-    var result = parinferAnnotations.textToData(zeroCursors)
+    var result = parinferAnnotations.textToData(noAnnotations)
     assert.strictEqual(result.validText, true)
   })
 
@@ -78,6 +77,40 @@ function testCursors () {
 }
 
 // -----------------------------------------------------------------------------
+// Error Lines
+// -----------------------------------------------------------------------------
+
+const oneError =
+  '(foo\n' +
+  '  ) foo} bar|\n' +
+  '       ^ error: unmatched-close-paren\n'
+
+const multipleErrors =
+  '(foo\n' +
+  '  ^ error: unmatched-close-paren\n' +
+  '  ) foo} bar|\n' +
+  '  ^ error: unmatched-close-paren\n'
+
+function testErrors () {
+  it('no errors is fine', function () {
+    var result = parinferAnnotations.textToData(noAnnotations)
+    assert.strictEqual(result.validText, true)
+  })
+
+  it('valid error line', function () {
+    var result = parinferAnnotations.textToData(oneError)
+    assert.strictEqual(result.validText, true)
+    // TODO: check for the error data here
+  })
+
+  it('cannot be more than one error line', function () {
+    var result = parinferAnnotations.textToData(multipleErrors)
+    assert.strictEqual(result.validText, false)
+    assert.strictEqual(result.error.code, 1020)
+  })
+}
+
+// -----------------------------------------------------------------------------
 // Test Cases
 // -----------------------------------------------------------------------------
 
@@ -101,4 +134,5 @@ function testTextToData () {
 }
 
 describe('cursors', testCursors)
+describe('errors', testErrors)
 describe('text --> data', testTextToData)

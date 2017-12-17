@@ -71,6 +71,14 @@ function validateCursor (text) {
   }
 }
 
+// there must be exactly zero or one error lines
+function validateErrorLines (text) {
+  var errors = text.match(/\^ error: /g)
+  if (isArray(errors) && errors.length > 1) {
+    throw error(1020, 'only one error can be specified')
+  }
+}
+
 function parsePrevCursorLine (options, inputLineNo, outputLineNo, input) {
   var match = input.match(/^\s*\^\s*prevCursor\s*$/)
   if (!match) {
@@ -215,6 +223,7 @@ function parseInput (text, extras) {
   if (extras.printParensOnly) { options.returnParens = true }
 
   validateCursor(text)
+  validateErrorLines(text)
 
   var inputLines = text.split(LINE_ENDING_REGEX)
   var outputLines = []
@@ -259,7 +268,7 @@ function parseErrorLine (result, inputLineNo, outputLineNo, input) {
     return false
   }
   if (result.error) {
-    throw error(inputLineNo, 'only one error can be specified')
+    throw error(1020, 'only one error can be specified', inputLineNo)
   }
   var x = input.indexOf('^')
   if (result.cursorLine === outputLineNo && result.cursorX < x) {
